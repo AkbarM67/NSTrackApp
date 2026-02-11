@@ -30,13 +30,13 @@ jobs:
       run: flutter pub get
     
     - name: Build APK
-      run: flutter build apk --release --no-shrink
+      run: flutter build apk --debug
     
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
         name: nstrackapp-release
-        path: build/app/outputs/flutter-apk/app-release.apk
+        path: build/app/outputs/flutter-apk/app-debug.apk
     
     - name: Create Release
       if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -44,6 +44,6 @@ jobs:
       with:
         tag_name: v1.0.${{ github.run_number }}
         name: Release v1.0.${{ github.run_number }}
-        files: build/app/outputs/flutter-apk/app-release.apk
+        files: build/app/outputs/flutter-apk/app-debug.apk
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
