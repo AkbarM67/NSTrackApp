@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "386441970583",
+    "project_id": "nstrack-ecb44",
+    "storage_bucket": "nstrack-ecb44.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:386441970583:android:d912f297372d1d2920bad2",
+        "android_client_info": {
+          "package_name": "com.example.nstrackapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAcCOGU0927U0TPEOhyccxtoAHTbrVvalg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
