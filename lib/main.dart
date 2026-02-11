@@ -46,11 +46,11 @@ class MyApp extends StatelessWidget {
             surface: Colors.white,
             background: Colors.white,
           ),
-          cardTheme: const CardThemeData(
+          cardTheme: CardThemeData(
             elevation: 1,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(24))),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
             color: Colors.white,
-            shadowColor: Color(0x0A000000),
+            shadowColor: const Color(0x0A000000),
           ),
           appBarTheme: const AppBarTheme(
             elevation: 0,
