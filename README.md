@@ -1,16 +1,40 @@
-# nstrackapp
+# NSTrackApp 💰
 
-A new Flutter project.
+Aplikasi pencatatan keuangan pribadi yang simpel dan mudah digunakan, dibuat dengan Flutter.
 
-## Getting Started
+## ✨ Fitur
 
-This project is a starting point for a Flutter application.
+- 📊 Catat pemasukan & pengeluaran
+- 📈 Lihat statistik keuangan bulanan
+- 📁 Kategorisasi transaksi otomatis
+- 📥 Import data dari Google Sheets
+- 💾 Penyimpanan lokal dengan SQLite
+- 🎨 UI modern dan responsif
 
-A few resources to get you started if this is your first Flutter project:
+## 📱 Download APK
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+[![Download APK](https://img.shields.io/github/v/release/AkbarM67/NSTrackApp?label=Download%20APK&style=for-the-badge&logo=android&color=3DDC84)](https://github.com/AkbarM67/NSTrackApp/releases/latest)
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+**Pilih APK sesuai device:**
+- [📱 ARM64 (HP Modern)](https://github.com/AkbarM67/NSTrackApp/releases/latest/download/app-arm64-v8a-release.apk)
+- [📱 ARMv7 (HP Lama)](https://github.com/AkbarM67/NSTrackApp/releases/latest/download/app-armeabi-v7a-release.apk)
+- [💻 x86_64 (Emulator)](https://github.com/AkbarM67/NSTrackApp/releases/latest/download/app-x86_64-release.apk)
+
+## 🚀 Cara Install
+
+1. Download APK dari link di atas
+2. Buka file APK di HP
+3. Izinkan "Install dari sumber tidak dikenal" jika diminta
+4. Install & buka aplikasi
+
+## 🛠️ Tech Stack
+
+- **Framework:** Flutter 3.27.1
+- **Database:** SQLite (sqflite)
+- **State Management:** Provider
+- **API:** Google Sheets API
+- **CI/CD:** GitHub Actions
+
+## 📝 Lisensi
+
+Dibuat oleh Akbar M67
