@@ -11,12 +11,15 @@ import 'providers/budget_provider.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/home/home_screen.dart';
 import 'core/services/notification_service.dart';
+import 'core/services/google_sheets_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  // Initialize Google Sheets (optional, tidak error jika belum setup)
+  GoogleSheetsService.init();
   runApp(const MyApp());
 }
 

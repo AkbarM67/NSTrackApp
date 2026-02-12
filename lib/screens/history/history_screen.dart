@@ -4,6 +4,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../providers/transaction_provider.dart';
 import '../../providers/savings_provider.dart';
+import '../../core/services/excel_service.dart';
+import '../../core/services/google_sheets_import_service.dart';
+import '../../core/utils/currency_format.dart';
+import '../../models/transaction_model.dart';
+import 'period_history_screen.dart';
+import 'recommendation_screen.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
@@ -30,6 +36,71 @@ class _HistoryScreenState extends State<HistoryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('History'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.lightbulb_outline),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const RecommendationScreen()),
+              );
+            },
+            tooltip: 'Analisis & Rekomendasi',
+          ),
+          IconButton(
+            icon: const Icon(Icons.calendar_month),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const PeriodHistoryScreen()),
+              );
+            },
+            tooltip: 'Riwayat Periode',
+          ),
+          PopupMenuButton(
+            icon: const Icon(Icons.more_vert),
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'export',
+                child: Row(
+                  children: [
+                    Icon(Icons.file_download, size: 20),
+                    SizedBox(width: 8),
+                    Text('Export ke Excel'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'import',
+                child: Row(
+                  children: [
+                    Icon(Icons.file_upload, size: 20),
+                    SizedBox(width: 8),
+                    Text('Import dari Excel'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'import_sheets',
+                child: Row(
+                  children: [
+                    Icon(Icons.cloud_download, size: 20),
+                    SizedBox(width: 8),
+                    Text('Import dari Google Sheets'),
+                  ],
+                ),
+              ),
+            ],
+            onSelected: (value) {
+              if (value == 'export') _exportToExcel();
+              if (value == 'import') _importFromExcel();
+              if (value == 'import_sheets') _importFromGoogleSheets();
+            },
+          ),
+        ],
+      ),
       body: Consumer<TransactionProvider>(
         builder: (context, provider, _) {
           return SingleChildScrollView(
@@ -139,38 +210,123 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   Widget _buildSummaryCards(double income, double expense) {
-    return Row(
+    final balance = income - expense;
+    return Column(
       children: [
-        Expanded(
-          child: Card(
-            color: Colors.green[100],
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  const Text('Pemasukan', style: TextStyle(fontSize: 14)),
-                  const SizedBox(height: 8),
-                  Text('Rp ${income.toStringAsFixed(0)}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                ],
-              ),
+        Card(
+          color: Colors.blue[50],
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Saldo Bulan Ini',
+                      style: TextStyle(fontSize: 14, color: Colors.grey),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      CurrencyFormat.formatRupiah(balance),
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: balance >= 0 ? Colors.green : Colors.red,
+                      ),
+                    ),
+                  ],
+                ),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: balance >= 0 ? Colors.green[100] : Colors.red[100],
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    balance >= 0 ? Icons.trending_up : Icons.trending_down,
+                    color: balance >= 0 ? Colors.green : Colors.red,
+                    size: 32,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Card(
-            color: Colors.red[100],
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  const Text('Pengeluaran', style: TextStyle(fontSize: 14)),
-                  const SizedBox(height: 8),
-                  Text('Rp ${expense.toStringAsFixed(0)}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                ],
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: Colors.green[100],
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(Icons.arrow_downward, color: Colors.green, size: 16),
+                          ),
+                          const SizedBox(width: 8),
+                          const Text(
+                            'Pemasukan',
+                            style: TextStyle(fontSize: 13, color: Colors.grey),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        CurrencyFormat.formatRupiah(income),
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
-          ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: Colors.red[100],
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(Icons.arrow_upward, color: Colors.red, size: 16),
+                          ),
+                          const SizedBox(width: 8),
+                          const Text(
+                            'Pengeluaran',
+                            style: TextStyle(fontSize: 13, color: Colors.grey),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        CurrencyFormat.formatRupiah(expense),
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -411,7 +567,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
       ),
     );
   }
-}
 
   Widget _buildSavingsChart() {
     return Consumer<SavingsProvider>(
@@ -479,3 +634,211 @@ class _HistoryScreenState extends State<HistoryScreen> {
       },
     );
   }
+
+  void _exportToExcel() async {
+    final provider = context.read<TransactionProvider>();
+    final excelService = ExcelService();
+    
+    final filePath = await excelService.exportTransactions(provider.transactions);
+    
+    if (mounted) {
+      if (filePath != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('File tersimpan: $filePath'),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Gagal export data'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  void _importFromExcel() async {
+    final excelService = ExcelService();
+    final data = await excelService.importTransactions();
+    
+    if (data == null || data.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Tidak ada data untuk diimport'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+      return;
+    }
+
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) return;
+
+    final provider = context.read<TransactionProvider>();
+    int successCount = 0;
+
+    for (var item in data) {
+      try {
+        final transaction = TransactionModel(
+          id: '',
+          userId: userId,
+          type: item['type'],
+          amount: item['amount'],
+          category: item['category'],
+          description: item['description'],
+          date: item['date'],
+        );
+        await provider.addTransaction(transaction);
+        successCount++;
+      } catch (e) {
+        continue;
+      }
+    }
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Berhasil import $successCount transaksi'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    }
+  }
+
+  void _importFromGoogleSheets() async {
+    // Dialog untuk input Spreadsheet ID dan Sheet Name
+    final spreadsheetIdController = TextEditingController();
+    final sheetNameController = TextEditingController(text: 'Sheet1');
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Import dari Google Sheets'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Masukkan Spreadsheet ID dari URL Google Sheets Anda',
+                style: TextStyle(fontSize: 12),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: spreadsheetIdController,
+                decoration: const InputDecoration(
+                  labelText: 'Spreadsheet ID',
+                  hintText: '1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: sheetNameController,
+                decoration: const InputDecoration(
+                  labelText: 'Nama Sheet',
+                  hintText: 'Sheet1',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'Pastikan sheet sudah di-share "Anyone with the link"',
+                style: TextStyle(fontSize: 11, color: Colors.orange),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Import'),
+          ),
+        ],
+      ),
+    );
+
+    if (result != true) return;
+
+    final spreadsheetId = spreadsheetIdController.text.trim();
+    final sheetName = sheetNameController.text.trim();
+
+    if (spreadsheetId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Spreadsheet ID tidak boleh kosong'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Show loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    final data = await GoogleSheetsImportService.importFromSheet(
+      spreadsheetId,
+      sheetName,
+    );
+
+    if (mounted) Navigator.pop(context); // Close loading
+
+    if (data == null || data.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Gagal import atau tidak ada data'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+      return;
+    }
+
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) return;
+
+    final provider = context.read<TransactionProvider>();
+    int successCount = 0;
+
+    for (var item in data) {
+      try {
+        final transaction = TransactionModel(
+          id: '',
+          userId: userId,
+          type: item['type'],
+          amount: item['amount'],
+          category: item['category'],
+          description: item['description'],
+          date: item['date'],
+        );
+        await provider.addTransaction(transaction);
+        successCount++;
+      } catch (e) {
+        continue;
+      }
+    }
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Berhasil import $successCount transaksi dari Google Sheets'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    }
+  }
+}

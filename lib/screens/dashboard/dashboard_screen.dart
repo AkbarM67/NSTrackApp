@@ -187,12 +187,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ],
                 ),
                 Expanded(
-                  child: provider.transactions.isEmpty
-                      ? const Center(child: Text('Belum ada transaksi'))
+                  child: provider.currentPeriodTransactions.isEmpty
+                      ? const Center(child: Text('Belum ada transaksi periode ini'))
                       : ListView.builder(
-                          itemCount: provider.transactions.length,
+                          itemCount: provider.currentPeriodTransactions.length,
                           itemBuilder: (context, index) {
-                            final transaction = provider.transactions[index];
+                            final transaction = provider.currentPeriodTransactions[index];
                             return Dismissible(
                               key: Key(transaction.id),
                               background: Container(
