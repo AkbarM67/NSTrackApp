@@ -206,6 +206,10 @@ class _AddSavingsGoalScreenState extends State<AddSavingsGoalScreen> {
       final targetAmount = parseCurrency(_targetAmountController.text);
       final monthlyRec = context.read<SavingsProvider>()
           .calculateMonthlyRecommendation(targetAmount, _targetDate);
+      final weeklyRec = context.read<SavingsProvider>()
+          .calculateWeeklyRecommendation(targetAmount, _targetDate);
+      final dailyRec = context.read<SavingsProvider>()
+          .calculateDailyRecommendation(targetAmount, _targetDate);
 
       final goal = SavingsGoalModel(
         id: '',
@@ -215,6 +219,8 @@ class _AddSavingsGoalScreenState extends State<AddSavingsGoalScreen> {
         currentAmount: 0,
         targetDate: _targetDate,
         monthlyRecommendation: monthlyRec,
+        weeklyRecommendation: weeklyRec,
+        dailyRecommendation: dailyRec,
         photoUrl: photoUrl,
         description: _descriptionController.text.isEmpty ? null : _descriptionController.text,
       );

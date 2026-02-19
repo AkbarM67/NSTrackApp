@@ -105,20 +105,59 @@ class _BudgetScreenState extends State<BudgetScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           const Text('Budget Bulanan', style: TextStyle(color: Colors.white70, fontSize: 14)),
-                          IconButton(
-                            icon: const Icon(Icons.edit, color: Colors.white, size: 20),
-                            onPressed: () async {
-                              final result = await Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (_) => SetBudgetScreen(budget: budget)),
-                              );
-                              if (result == true && mounted) {
-                                final userId = FirebaseAuth.instance.currentUser?.uid;
-                                if (userId != null) {
-                                  context.read<BudgetProvider>().loadBudget(userId);
-                                }
-                              }
-                            },
+                          Row(
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.delete, color: Colors.white, size: 20),
+                                onPressed: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                      title: const Text('Hapus Budget'),
+                                      content: const Text('Yakin ingin menghapus budget ini?'),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () => Navigator.pop(context),
+                                          child: const Text('Batal'),
+                                        ),
+                                        ElevatedButton(
+                                          onPressed: () async {
+                                            await context.read<BudgetProvider>().deleteBudget();
+                                            if (context.mounted) {
+                                              Navigator.pop(context);
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                const SnackBar(
+                                                  content: Text('Budget berhasil dihapus'),
+                                                  backgroundColor: Colors.green,
+                                                ),
+                                              );
+                                            }
+                                          },
+                                          style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                                          child: const Text('Hapus', style: TextStyle(color: Colors.white)),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.edit, color: Colors.white, size: 20),
+                                onPressed: () async {
+                                  final result = await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (_) => SetBudgetScreen(budget: budget)),
+                                  );
+                                  if (result == true && mounted) {
+                                    final userId = FirebaseAuth.instance.currentUser?.uid;
+                                    if (userId != null) {
+                                      context.read<BudgetProvider>().loadBudget(userId);
+                                    }
+                                  }
+                                },
+                              ),
+                            ],
                           ),
                         ],
                       ),

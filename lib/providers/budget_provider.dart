@@ -43,6 +43,18 @@ class BudgetProvider with ChangeNotifier {
     }
   }
 
+  Future<void> deleteBudget() async {
+    try {
+      if (_budget != null) {
+        await _db.collection('budgets').doc(_budget!.id).delete();
+        _budget = null;
+        notifyListeners();
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   double getNeedsSpent(List transactions) {
     return transactions
         .where((t) => t.type == 'expense' && 

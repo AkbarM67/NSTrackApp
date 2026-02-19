@@ -201,13 +201,45 @@ class _SavingsScreenState extends State<SavingsScreen> {
                                 color: AppColors.primary.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              child: Row(
+                              child: Column(
                                 children: [
-                                  Icon(Icons.calendar_today, size: 16, color: AppColors.primary),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'Rekomendasi: ${CurrencyFormat.formatRupiah(goal.monthlyRecommendation)}/bulan',
-                                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primary),
+                                  Row(
+                                    children: [
+                                      Icon(Icons.calendar_month, size: 16, color: AppColors.primary),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          'Per Bulan: ${CurrencyFormat.formatRupiah(goal.currentMonthlyRecommendation)}',
+                                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primary),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Row(
+                                    children: [
+                                      Icon(Icons.calendar_view_week, size: 16, color: AppColors.primary),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          'Per Minggu: ${CurrencyFormat.formatRupiah(goal.currentWeeklyRecommendation)}',
+                                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primary),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Row(
+                                    children: [
+                                      Icon(Icons.calendar_today, size: 16, color: AppColors.primary),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          'Per Hari: ${CurrencyFormat.formatRupiah(goal.currentDailyRecommendation)}',
+                                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primary),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),

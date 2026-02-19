@@ -98,11 +98,28 @@ class SavingsProvider with ChangeNotifier {
     await _service.updateSavingsGoal(id, data);
   }
 
-  double calculateMonthlyRecommendation(double targetAmount, DateTime targetDate) {
+  double calculateMonthlyRecommendation(double remainingAmount, DateTime targetDate) {
     final now = DateTime.now();
     final monthsLeft = (targetDate.year - now.year) * 12 + (targetDate.month - now.month);
     
-    if (monthsLeft <= 0) return targetAmount;
-    return targetAmount / monthsLeft;
+    if (monthsLeft <= 0) return remainingAmount;
+    return remainingAmount / monthsLeft;
+  }
+
+  double calculateWeeklyRecommendation(double remainingAmount, DateTime targetDate) {
+    final now = DateTime.now();
+    final daysLeft = targetDate.difference(now).inDays;
+    final weeksLeft = (daysLeft / 7).ceil();
+    
+    if (weeksLeft <= 0) return remainingAmount;
+    return remainingAmount / weeksLeft;
+  }
+
+  double calculateDailyRecommendation(double remainingAmount, DateTime targetDate) {
+    final now = DateTime.now();
+    final daysLeft = targetDate.difference(now).inDays;
+    
+    if (daysLeft <= 0) return remainingAmount;
+    return remainingAmount / daysLeft;
   }
 }

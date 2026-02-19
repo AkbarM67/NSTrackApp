@@ -98,6 +98,10 @@ class _EditSavingsGoalScreenState extends State<EditSavingsGoalScreen> {
       final targetAmount = parseCurrency(_targetAmountController.text);
       final monthlyRec = context.read<SavingsProvider>()
           .calculateMonthlyRecommendation(targetAmount, _targetDate);
+      final weeklyRec = context.read<SavingsProvider>()
+          .calculateWeeklyRecommendation(targetAmount, _targetDate);
+      final dailyRec = context.read<SavingsProvider>()
+          .calculateDailyRecommendation(targetAmount, _targetDate);
 
       await context.read<SavingsProvider>().updateSavingsGoal(
         widget.goal.id,
@@ -106,6 +110,8 @@ class _EditSavingsGoalScreenState extends State<EditSavingsGoalScreen> {
           'targetAmount': targetAmount,
           'targetDate': _targetDate.toIso8601String(),
           'monthlyRecommendation': monthlyRec,
+          'weeklyRecommendation': weeklyRec,
+          'dailyRecommendation': dailyRec,
         },
       );
 
