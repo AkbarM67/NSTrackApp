@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../providers/transaction_provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/utils/currency_format.dart';
+import '../../core/services/simple_widget_service.dart';
 import '../transaction/add_transaction_screen.dart';
 import '../transaction/edit_transaction_screen.dart';
 import '../transaction/transaction_list_screen.dart';
@@ -16,6 +17,8 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  bool _hideAmount = false;
+
   @override
   void initState() {
     super.initState();
@@ -33,6 +36,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildDashboard() {
     return Consumer<TransactionProvider>(
       builder: (context, provider, _) {
+        // Update widget
+        SimpleWidgetService.updateWidget(provider.balance, provider.totalIncome, provider.totalExpense);
+        
         return Scaffold(
           body: Padding(
             padding: const EdgeInsets.all(16.0),
@@ -79,7 +85,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               ],
                             ),
                             const SizedBox(height: 12),
-                            Text(CurrencyFormat.formatRupiah(provider.totalIncome),
+                            Text(_hideAmount ? CurrencyFormat.hideRupiah(provider.totalIncome) : CurrencyFormat.formatRupiah(provider.totalIncome),
                                 style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
                           ],
                         ),
@@ -124,7 +130,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               ],
                             ),
                             const SizedBox(height: 12),
-                            Text(CurrencyFormat.formatRupiah(provider.totalExpense),
+                            Text(_hideAmount ? CurrencyFormat.hideRupiah(provider.totalExpense) : CurrencyFormat.formatRupiah(provider.totalExpense),
                                 style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
                           ],
                         ),
@@ -154,17 +160,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         children: [
                           const Text('Total Saldo', style: TextStyle(color: Colors.white70, fontSize: 14)),
                           const SizedBox(height: 4),
-                          Text(CurrencyFormat.formatRupiah(provider.balance),
+                          Text(_hideAmount ? CurrencyFormat.hideRupiah(provider.balance) : CurrencyFormat.formatRupiah(provider.balance),
                               style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
                         ],
                       ),
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(Icons.account_balance_wallet, color: Colors.white, size: 32),
+                      IconButton(
+                        onPressed: () => setState(() => _hideAmount = !_hideAmount),
+                        icon: Icon(_hideAmount ? Icons.visibility_off : Icons.visibility, color: Colors.white),
                       ),
                     ],
                   ),

@@ -18,7 +18,6 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  // Initialize Google Sheets (optional, tidak error jika belum setup)
   GoogleSheetsService.init();
   runApp(const MyApp());
 }

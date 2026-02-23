@@ -9,4 +9,11 @@ class CurrencyFormat {
     );
     return formatter.format(amount);
   }
+
+  static String hideRupiah(double amount) {
+    final formatted = formatRupiah(amount);
+    final parts = formatted.replaceAll('Rp ', '').split('.');
+    if (parts.isEmpty) return 'Rp xxx';
+    return 'Rp ${parts[0]}${parts.length > 1 ? '.xxx' * (parts.length - 1) : ''}';
+  }
 }

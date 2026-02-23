@@ -31,10 +31,12 @@ class ExcelService {
         ]);
       }
 
-      // Save file
-      final directory = await getApplicationDocumentsDirectory();
+      // Pilih folder tujuan
+      final directoryPath = await FilePicker.platform.getDirectoryPath();
+      if (directoryPath == null) return null;
+      
       final fileName = 'Transaksi_${DateFormat('yyyyMMdd_HHmmss').format(DateTime.now())}.xlsx';
-      final filePath = '${directory.path}/$fileName';
+      final filePath = '$directoryPath/$fileName';
       
       final fileBytes = excel.encode();
       if (fileBytes != null) {
