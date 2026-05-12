@@ -16,16 +16,6 @@ class BudgetScreen extends StatefulWidget {
 
 class _BudgetScreenState extends State<BudgetScreen> {
   @override
-  void initState() {
-    super.initState();
-    final userId = FirebaseAuth.instance.currentUser?.uid;
-    if (userId != null) {
-      context.read<BudgetProvider>().loadBudget(userId);
-      context.read<TransactionProvider>().listenTransactions(userId);
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,

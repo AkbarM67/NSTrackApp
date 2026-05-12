@@ -26,11 +26,6 @@ class _SavingsScreenState extends State<SavingsScreen> with SingleTickerProvider
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _tabController.addListener(() => setState(() {}));
-    final userId = FirebaseAuth.instance.currentUser?.uid;
-    if (userId != null) {
-      context.read<SavingsProvider>().listenSavingsGoals(userId);
-      context.read<CicilanProvider>().listenCicilan(userId);
-    }
   }
 
   @override

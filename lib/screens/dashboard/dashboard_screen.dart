@@ -20,15 +20,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   bool _hideAmount = false;
 
   @override
-  void initState() {
-    super.initState();
-    final userId = FirebaseAuth.instance.currentUser?.uid;
-    if (userId != null) {
-      context.read<TransactionProvider>().listenTransactions(userId);
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
     return _buildDashboard();
   }

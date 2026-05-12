@@ -24,16 +24,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
   int selectedMonth = DateTime.now().month;
 
   @override
-  void initState() {
-    super.initState();
-    final userId = FirebaseAuth.instance.currentUser?.uid;
-    if (userId != null) {
-      context.read<TransactionProvider>().listenTransactions(userId);
-      context.read<SavingsProvider>().listenSavingsGoals(userId);
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(

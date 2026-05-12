@@ -16,15 +16,6 @@ class CicilanScreen extends StatefulWidget {
 
 class _CicilanScreenState extends State<CicilanScreen> {
   @override
-  void initState() {
-    super.initState();
-    final userId = FirebaseAuth.instance.currentUser?.uid;
-    if (userId != null) {
-      context.read<CicilanProvider>().listenCicilan(userId);
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Consumer<CicilanProvider>(
       builder: (context, provider, _) {
