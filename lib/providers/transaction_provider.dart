@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../core/services/firebase_service.dart';
 import '../core/services/google_sheets_service.dart';
 import '../core/utils/period_helper.dart';
@@ -29,16 +30,29 @@ class TransactionProvider with ChangeNotifier {
 
   void listenTransactions(String userId) {
     _isLoaded = false;
-    _service.getTransactions(userId).listen((snapshot) {
-      _transactions = snapshot.docs
-          .map((doc) => TransactionModel.fromMap(
-              doc.id, doc.data() as Map<String, dynamic>))
-          .toList();
-      _isLoaded = true;
-      notifyListeners();
-    }, onError: (e) {
-      _isLoaded = true;
-      notifyListeners();
+    FirebaseAuth.instance.currentUser?.getIdToken(true).then((_) {
+      _service.getTransactions(userId).listen((snapshot) {
+        _transactions = snapshot.docs
+            .map((doc) => TransactionModel.fromMap(
+                doc.id, doc.data() as Map<String, dynamic>))
+            .toList();
+        _isLoaded = true;
+        notifyListeners();
+      }, onError: (e) {
+        Future.delayed(const Duration(seconds: 1), () {
+          _service.getTransactions(userId).listen((snapshot) {
+            _transactions = snapshot.docs
+                .map((doc) => TransactionModel.fromMap(
+                    doc.id, doc.data() as Map<String, dynamic>))
+                .toList();
+            _isLoaded = true;
+            notifyListeners();
+          }, onError: (_) {
+            _isLoaded = true;
+            notifyListeners();
+          });
+        });
+      });
     });
   }
 

@@ -23,15 +23,29 @@ class CicilanProvider with ChangeNotifier {
 
   void listenCicilan(String userId) {
     _isLoaded = false;
-    _service.getCicilan(userId).listen((snapshot) {
-      _cicilanList = snapshot.docs
-          .map((doc) => CicilanModel.fromMap(doc.id, doc.data() as Map<String, dynamic>))
-          .toList();
-      _isLoaded = true;
-      notifyListeners();
-    }, onError: (e) {
-      _isLoaded = true;
-      notifyListeners();
+    // Paksa refresh token dulu sebelum listen
+    FirebaseAuth.instance.currentUser?.getIdToken(true).then((_) {
+      _service.getCicilan(userId).listen((snapshot) {
+        _cicilanList = snapshot.docs
+            .map((doc) => CicilanModel.fromMap(doc.id, doc.data() as Map<String, dynamic>))
+            .toList();
+        _isLoaded = true;
+        notifyListeners();
+      }, onError: (e) {
+        // Retry sekali setelah 1 detik
+        Future.delayed(const Duration(seconds: 1), () {
+          _service.getCicilan(userId).listen((snapshot) {
+            _cicilanList = snapshot.docs
+                .map((doc) => CicilanModel.fromMap(doc.id, doc.data() as Map<String, dynamic>))
+                .toList();
+            _isLoaded = true;
+            notifyListeners();
+          }, onError: (_) {
+            _isLoaded = true;
+            notifyListeners();
+          });
+        });
+      });
     });
   }
 

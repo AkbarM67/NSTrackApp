@@ -102,14 +102,10 @@ class _AuthWrapperState extends State<AuthWrapper> {
   void _startListeners(String userId) {
     if (_listenersStarted) return;
     _listenersStarted = true;
-    // Delay kecil untuk pastikan auth token sudah siap di Firestore
-    Future.delayed(const Duration(milliseconds: 500), () {
-      if (!mounted) return;
-      context.read<TransactionProvider>().listenTransactions(userId);
-      context.read<SavingsProvider>().listenSavingsGoals(userId);
-      context.read<CicilanProvider>().listenCicilan(userId);
-      context.read<BudgetProvider>().loadBudget(userId);
-    });
+    context.read<TransactionProvider>().listenTransactions(userId);
+    context.read<SavingsProvider>().listenSavingsGoals(userId);
+    context.read<CicilanProvider>().listenCicilan(userId);
+    context.read<BudgetProvider>().loadBudget(userId);
   }
 
   @override

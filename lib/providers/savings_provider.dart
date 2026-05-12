@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../core/services/firebase_service.dart';
 import '../models/savings_goal_model.dart';
 import '../models/savings_deposit_model.dart';
@@ -18,16 +19,29 @@ class SavingsProvider with ChangeNotifier {
 
   void listenSavingsGoals(String userId) {
     _isLoaded = false;
-    _service.getSavingsGoals(userId).listen((snapshot) {
-      _savingsGoals = snapshot.docs
-          .map((doc) => SavingsGoalModel.fromMap(
-              doc.id, doc.data() as Map<String, dynamic>))
-          .toList();
-      _isLoaded = true;
-      notifyListeners();
-    }, onError: (e) {
-      _isLoaded = true;
-      notifyListeners();
+    FirebaseAuth.instance.currentUser?.getIdToken(true).then((_) {
+      _service.getSavingsGoals(userId).listen((snapshot) {
+        _savingsGoals = snapshot.docs
+            .map((doc) => SavingsGoalModel.fromMap(
+                doc.id, doc.data() as Map<String, dynamic>))
+            .toList();
+        _isLoaded = true;
+        notifyListeners();
+      }, onError: (e) {
+        Future.delayed(const Duration(seconds: 1), () {
+          _service.getSavingsGoals(userId).listen((snapshot) {
+            _savingsGoals = snapshot.docs
+                .map((doc) => SavingsGoalModel.fromMap(
+                    doc.id, doc.data() as Map<String, dynamic>))
+                .toList();
+            _isLoaded = true;
+            notifyListeners();
+          }, onError: (_) {
+            _isLoaded = true;
+            notifyListeners();
+          });
+        });
+      });
     });
   }
 
