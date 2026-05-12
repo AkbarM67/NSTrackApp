@@ -8,6 +8,7 @@ import 'providers/auth_provider.dart' as custom_auth;
 import 'providers/transaction_provider.dart';
 import 'providers/savings_provider.dart';
 import 'providers/budget_provider.dart';
+import 'providers/cicilan_provider.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/home/home_screen.dart';
 import 'core/services/notification_service.dart';
@@ -33,6 +34,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => TransactionProvider()),
         ChangeNotifierProvider(create: (_) => SavingsProvider()),
         ChangeNotifierProvider(create: (_) => BudgetProvider()),
+        ChangeNotifierProvider(create: (_) => CicilanProvider()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,

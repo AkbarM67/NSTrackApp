@@ -68,4 +68,24 @@ class FirebaseService {
   Future<void> deleteSavingsDeposit(String id) async {
     await _db.collection('savings_deposits').doc(id).delete();
   }
+
+  // CICILAN
+  Future<String> addCicilan(Map<String, dynamic> data) async {
+    final doc = await _db.collection('cicilan').add(data);
+    return doc.id;
+  }
+
+  Stream<QuerySnapshot> getCicilan(String userId) {
+    return _db.collection('cicilan')
+        .where('userId', isEqualTo: userId)
+        .snapshots();
+  }
+
+  Future<void> updateCicilan(String id, Map<String, dynamic> data) async {
+    await _db.collection('cicilan').doc(id).update(data);
+  }
+
+  Future<void> deleteCicilan(String id) async {
+    await _db.collection('cicilan').doc(id).delete();
+  }
 }

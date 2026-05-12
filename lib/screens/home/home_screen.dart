@@ -60,18 +60,20 @@ class _HomeScreenState extends State<HomeScreen> {
             : const Icon(Icons.document_scanner, size: 28),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: BottomAppBar(
-        shape: const CircularNotchedRectangle(),
-        notchMargin: 8,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _buildNavItem(Icons.dashboard, 'Beranda', 0),
-            _buildNavItem(Icons.history, 'History', 1),
-            const SizedBox(width: 40),
-            _buildNavItem(Icons.account_balance_wallet, 'Budget', 2),
-            _buildNavItem(Icons.savings, 'Tabungan', 3),
-          ],
+      bottomNavigationBar: RepaintBoundary(
+        child: BottomAppBar(
+          shape: const CircularNotchedRectangle(),
+          notchMargin: 8,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildNavItem(Icons.dashboard, 'Beranda', 0),
+              _buildNavItem(Icons.history, 'History', 1),
+              const SizedBox(width: 40),
+              _buildNavItem(Icons.account_balance_wallet, 'Budget', 2),
+              _buildNavItem(Icons.savings, 'Tabungan', 3),
+            ],
+          ),
         ),
       ),
     );

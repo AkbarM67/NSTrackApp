@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../providers/transaction_provider.dart';
 import '../../providers/savings_provider.dart';
 import '../../providers/budget_provider.dart';
+import '../../providers/cicilan_provider.dart';
 import '../../models/transaction_model.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../core/constants/app_colors.dart';
@@ -26,9 +27,11 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   String _type = 'expense';
   String _category = 'Makanan';
   String? _selectedSavingsGoalId;
+  String? _selectedCicilanId;
   bool _isScanning = false;
+  DateTime _selectedDate = DateTime.now();
 
-  final List<String> _expenseCategories = ['Makanan', 'Transport', 'Belanja', 'Hiburan', 'Nabung', 'Lainnya'];
+  final List<String> _expenseCategories = ['Makanan', 'Transport', 'Belanja', 'Hiburan', 'Cicilan', 'Nabung', 'Lainnya'];
   final List<String> _incomeCategories = ['Gaji', 'Bonus', 'Investasi', 'Lainnya'];
 
   @override
@@ -37,6 +40,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
     final userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId != null) {
       context.read<SavingsProvider>().listenSavingsGoals(userId);
+      context.read<CicilanProvider>().listenCicilan(userId);
     }
   }
 
@@ -120,6 +124,9 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                     if (_category != 'Nabung') {
                       _selectedSavingsGoalId = null;
                     }
+                    if (_category != 'Cicilan') {
+                      _selectedCicilanId = null;
+                    }
                   });
                 },
               ),
@@ -172,6 +179,67 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                   },
                 ),
               ],
+              if (_category == 'Cicilan') ...[
+                const SizedBox(height: 24),
+                const Text('Pilih Cicilan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 12),
+                Consumer<CicilanProvider>(
+                  builder: (context, cicilanProvider, _) {
+                    final aktif = cicilanProvider.activeCicilan;
+                    if (aktif.isEmpty) {
+                      return Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.shade50,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.orange.shade200),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.info_outline, color: Colors.orange.shade700),
+                            const SizedBox(width: 12),
+                            const Expanded(
+                              child: Text(
+                                'Belum ada cicilan aktif. Tambah dulu di menu Tabungan > Cicilan.',
+                                style: TextStyle(fontSize: 12),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+                    return DropdownButtonFormField<String>(
+                      value: _selectedCicilanId,
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                        filled: true,
+                        fillColor: const Color(0xFFF5F5F5),
+                        prefixIcon: Icon(Icons.credit_card, color: AppColors.primary),
+                        hintText: 'Pilih cicilan',
+                      ),
+                      items: aktif.map((c) {
+                        return DropdownMenuItem(
+                          value: c.id,
+                          child: Text('${c.name} (${c.paidMonths + 1}/${c.totalMonths})'),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedCicilanId = value;
+                          // Auto-fill jumlah cicilan
+                          if (value != null) {
+                            final cicilan = aktif.firstWhere((c) => c.id == value);
+                            _amountController.text = cicilan.monthlyAmount
+                                .toStringAsFixed(0)
+                                .replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.');
+                          }
+                        });
+                      },
+                      validator: (v) => v == null ? 'Pilih cicilan' : null,
+                    );
+                  },
+                ),
+              ],
               const SizedBox(height: 24),
               const Text('Jumlah', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
               const SizedBox(height: 12),
@@ -189,6 +257,62 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                 inputFormatters: [CurrencyInputFormatter()],
                 validator: (value) => value?.isEmpty ?? true ? 'Masukkan jumlah' : null,
                 style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 24),
+              const Text('Tanggal', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () async {
+                        final today = DateTime.now();
+                        final initialDate = _selectedDate.isAfter(today) ? today : _selectedDate;
+                        final picked = await showDatePicker(
+                          context: context,
+                          initialDate: DateTime(initialDate.year, initialDate.month, initialDate.day),
+                          firstDate: DateTime(2020),
+                          lastDate: DateTime(today.year, today.month, today.day),
+                        );
+                        if (picked != null) {
+                          setState(() => _selectedDate = picked);
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF5F5F5),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.grey.shade300),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.calendar_today_outlined, color: AppColors.primary, size: 20),
+                            const SizedBox(width: 12),
+                            Text(
+                              _isToday(_selectedDate)
+                                  ? 'Hari Ini'
+                                  : '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
+                              style: const TextStyle(fontSize: 15),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  if (!_isToday(_selectedDate)) ...[
+                    const SizedBox(width: 8),
+                    TextButton(
+                      onPressed: () => setState(() => _selectedDate = DateTime.now()),
+                      style: TextButton.styleFrom(
+                        backgroundColor: AppColors.primary.withOpacity(0.1),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                      ),
+                      child: Text('Hari Ini', style: TextStyle(color: AppColors.primary, fontSize: 13)),
+                    ),
+                  ],
+                ],
               ),
               const SizedBox(height: 24),
               const Text('Deskripsi', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
@@ -222,6 +346,11 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
         ),
       ),
     );
+  }
+
+  bool _isToday(DateTime date) {
+    final now = DateTime.now();
+    return date.year == now.year && date.month == now.month && date.day == now.day;
   }
 
   void _scanReceipt() async {
@@ -276,6 +405,15 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
           );
           Navigator.pop(context);
         }
+      } else if (_category == 'Cicilan' && _selectedCicilanId != null) {
+        // Bayar cicilan & catat transaksi
+        await context.read<CicilanProvider>().bayarCicilan(_selectedCicilanId!);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Cicilan berhasil dibayar'), backgroundColor: Colors.green),
+          );
+          Navigator.pop(context);
+        }
       } else {
         // Simpan sebagai transaksi biasa
         final transaction = TransactionModel(
@@ -285,7 +423,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
           amount: amount,
           category: _category,
           description: _descriptionController.text,
-          date: DateTime.now(),
+          date: _selectedDate,
         );
 
         await context.read<TransactionProvider>().addTransaction(transaction);

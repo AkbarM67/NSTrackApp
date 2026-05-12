@@ -88,89 +88,7 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
                   );
                 }
 
-                return ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: filteredTransactions.length,
-                  itemBuilder: (context, index) {
-                    final transaction = filteredTransactions[index];
-                    return Dismissible(
-                      key: Key(transaction.id),
-                      background: Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        decoration: BoxDecoration(
-                          color: Colors.red,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        alignment: Alignment.centerRight,
-                        padding: const EdgeInsets.only(right: 20),
-                        child: const Icon(Icons.delete, color: Colors.white),
-                      ),
-                      direction: DismissDirection.endToStart,
-                      onDismissed: (direction) {
-                        context.read<TransactionProvider>().deleteTransaction(transaction.id);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Transaksi dihapus')),
-                        );
-                      },
-                      child: Card(
-                        elevation: 0,
-                        margin: const EdgeInsets.only(bottom: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          side: BorderSide(color: Colors.grey.shade200),
-                        ),
-                        child: ListTile(
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          leading: Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: transaction.type == 'income'
-                                  ? AppColors.income.withOpacity(0.1)
-                                  : AppColors.expense.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Icon(
-                              transaction.type == 'income' ? Icons.arrow_downward : Icons.arrow_upward,
-                              color: transaction.type == 'income' ? AppColors.income : AppColors.expense,
-                              size: 20,
-                            ),
-                          ),
-                          title: Text(transaction.category, style: const TextStyle(fontWeight: FontWeight.w600)),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                transaction.description,
-                                style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                '${transaction.date.day}/${transaction.date.month}/${transaction.date.year}',
-                                style: TextStyle(color: Colors.grey.shade500, fontSize: 11),
-                              ),
-                            ],
-                          ),
-                          trailing: Text(
-                            CurrencyFormat.formatRupiah(transaction.amount),
-                            style: TextStyle(
-                              color: transaction.type == 'income' ? AppColors.income : AppColors.expense,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                          ),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => EditTransactionScreen(transaction: transaction),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    );
-                  },
-                );
+                return _buildGroupedList(context, filteredTransactions);
               },
             ),
           ),
@@ -188,6 +106,125 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
         backgroundColor: AppColors.primary,
       ),
     );
+  }
+
+  Widget _buildGroupedList(BuildContext context, List<TransactionModel> transactions) {
+    final Map<String, List<TransactionModel>> grouped = {};
+    for (final t in transactions) {
+      final key = '${t.date.year}-${t.date.month.toString().padLeft(2, '0')}-${t.date.day.toString().padLeft(2, '0')}';
+      grouped.putIfAbsent(key, () => []).add(t);
+    }
+
+    final sortedKeys = grouped.keys.toList()..sort((a, b) => b.compareTo(a));
+
+    final List items = [];
+    for (final key in sortedKeys) {
+      items.add(grouped[key]!.first.date);
+      items.addAll(grouped[key]!);
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: items.length,
+      itemBuilder: (context, index) {
+        final item = items[index];
+
+        if (item is DateTime) {
+          return Padding(
+            padding: const EdgeInsets.only(top: 8, bottom: 4),
+            child: Text(
+              _formatDateHeader(item),
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          );
+        }
+
+        final transaction = item as TransactionModel;
+        return Dismissible(
+          key: Key(transaction.id),
+          background: Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            decoration: BoxDecoration(
+              color: Colors.red,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            alignment: Alignment.centerRight,
+            padding: const EdgeInsets.only(right: 20),
+            child: const Icon(Icons.delete, color: Colors.white),
+          ),
+          direction: DismissDirection.endToStart,
+          onDismissed: (_) {
+            context.read<TransactionProvider>().deleteTransaction(transaction.id);
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Transaksi dihapus')),
+            );
+          },
+          child: Card(
+            elevation: 0,
+            margin: const EdgeInsets.only(bottom: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: BorderSide(color: Colors.grey.shade200),
+            ),
+            child: ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              leading: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: transaction.type == 'income'
+                      ? AppColors.income.withOpacity(0.1)
+                      : AppColors.expense.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  transaction.type == 'income' ? Icons.arrow_downward : Icons.arrow_upward,
+                  color: transaction.type == 'income' ? AppColors.income : AppColors.expense,
+                  size: 20,
+                ),
+              ),
+              title: Text(transaction.category, style: const TextStyle(fontWeight: FontWeight.w600)),
+              subtitle: transaction.description.isNotEmpty
+                  ? Text(transaction.description,
+                      style: TextStyle(color: AppColors.textSecondary, fontSize: 12))
+                  : null,
+              trailing: Text(
+                CurrencyFormat.formatRupiah(transaction.amount),
+                style: TextStyle(
+                  color: transaction.type == 'income' ? AppColors.income : AppColors.expense,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => EditTransactionScreen(transaction: transaction),
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  String _formatDateHeader(DateTime date) {
+    final now = DateTime.now();
+    if (date.year == now.year && date.month == now.month && date.day == now.day) {
+      return 'Hari ini';
+    }
+    final yesterday = now.subtract(const Duration(days: 1));
+    if (date.year == yesterday.year && date.month == yesterday.month && date.day == yesterday.day) {
+      return 'Kemarin';
+    }
+    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+    return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
 
   Widget _buildFilterChips() {
