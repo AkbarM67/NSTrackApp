@@ -16,6 +16,11 @@ import 'core/services/google_sheets_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.presentError(details);
+  };
+
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
