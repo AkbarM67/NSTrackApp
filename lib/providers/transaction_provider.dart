@@ -9,6 +9,8 @@ class TransactionProvider with ChangeNotifier {
 
   List<TransactionModel> _transactions = [];
   List<TransactionModel> get transactions => _transactions;
+  bool _isLoaded = false;
+  bool get isLoaded => _isLoaded;
 
   // Get current period transactions (11th to 10th)
   List<TransactionModel> get currentPeriodTransactions {
@@ -26,11 +28,13 @@ class TransactionProvider with ChangeNotifier {
   double get balance => totalIncome - totalExpense;
 
   void listenTransactions(String userId) {
+    _isLoaded = false;
     _service.getTransactions(userId).listen((snapshot) {
       _transactions = snapshot.docs
           .map((doc) => TransactionModel.fromMap(
               doc.id, doc.data() as Map<String, dynamic>))
           .toList();
+      _isLoaded = true;
       notifyListeners();
     });
   }

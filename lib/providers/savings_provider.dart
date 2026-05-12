@@ -10,16 +10,20 @@ class SavingsProvider with ChangeNotifier {
 
   List<SavingsGoalModel> _savingsGoals = [];
   List<SavingsGoalModel> get savingsGoals => _savingsGoals;
+  bool _isLoaded = false;
+  bool get isLoaded => _isLoaded;
 
   List<SavingsDepositModel> _deposits = [];
   List<SavingsDepositModel> get deposits => _deposits;
 
   void listenSavingsGoals(String userId) {
+    _isLoaded = false;
     _service.getSavingsGoals(userId).listen((snapshot) {
       _savingsGoals = snapshot.docs
           .map((doc) => SavingsGoalModel.fromMap(
               doc.id, doc.data() as Map<String, dynamic>))
           .toList();
+      _isLoaded = true;
       notifyListeners();
     });
   }

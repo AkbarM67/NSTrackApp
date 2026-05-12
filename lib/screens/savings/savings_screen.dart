@@ -80,6 +80,9 @@ class _SavingsScreenState extends State<SavingsScreen> with SingleTickerProvider
   Widget _buildTabunganTab() {
     return Consumer<SavingsProvider>(
       builder: (context, provider, _) {
+        if (!provider.isLoaded) {
+          return const Center(child: CircularProgressIndicator());
+        }
         if (provider.savingsGoals.isEmpty) {
           return Center(
             child: Column(

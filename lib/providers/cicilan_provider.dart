@@ -15,7 +15,14 @@ class CicilanProvider with ChangeNotifier {
   List<CicilanModel> get activeCicilan => _cicilanList.where((c) => !c.isCompleted).toList();
   List<CicilanModel> get completedCicilan => _cicilanList.where((c) => c.isCompleted).toList();
 
+  void reset() {
+    _cicilanList = [];
+    _isLoaded = false;
+    notifyListeners();
+  }
+
   void listenCicilan(String userId) {
+    _isLoaded = false;
     _service.getCicilan(userId).listen((snapshot) {
       _cicilanList = snapshot.docs
           .map((doc) => CicilanModel.fromMap(doc.id, doc.data() as Map<String, dynamic>))

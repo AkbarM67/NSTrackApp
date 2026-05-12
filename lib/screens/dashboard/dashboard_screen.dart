@@ -27,6 +27,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildDashboard() {
     return Consumer<TransactionProvider>(
       builder: (context, provider, _) {
+        if (!provider.isLoaded) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
         // Update widget
         SimpleWidgetService.updateWidget(provider.balance, provider.totalIncome, provider.totalExpense);
         
