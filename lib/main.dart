@@ -97,11 +97,21 @@ class AuthWrapper extends StatelessWidget {
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
-        if (snapshot.hasData) {
-          return const HomeScreen();
-        } else {
-          return LoginScreen();
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
         }
+        if (snapshot.hasData) {
+          final userId = snapshot.data!.uid;
+          // Start semua listener sebelum masuk HomeScreen
+          context.read<TransactionProvider>().listenTransactions(userId);
+          context.read<SavingsProvider>().listenSavingsGoals(userId);
+          context.read<CicilanProvider>().listenCicilan(userId);
+          context.read<BudgetProvider>().loadBudget(userId);
+          return const HomeScreen();
+        }
+        return LoginScreen();
       },
     );
   }
