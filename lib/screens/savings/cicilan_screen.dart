@@ -19,6 +19,9 @@ class _CicilanScreenState extends State<CicilanScreen> {
   Widget build(BuildContext context) {
     return Consumer<CicilanProvider>(
       builder: (context, provider, _) {
+        if (!provider.isLoaded) {
+          return const Center(child: CircularProgressIndicator());
+        }
         if (provider.cicilanList.isEmpty) {
           return Center(
             child: Column(

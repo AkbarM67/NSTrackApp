@@ -9,6 +9,8 @@ class CicilanProvider with ChangeNotifier {
 
   List<CicilanModel> _cicilanList = [];
   List<CicilanModel> get cicilanList => _cicilanList;
+  bool _isLoaded = false;
+  bool get isLoaded => _isLoaded;
 
   List<CicilanModel> get activeCicilan => _cicilanList.where((c) => !c.isCompleted).toList();
   List<CicilanModel> get completedCicilan => _cicilanList.where((c) => c.isCompleted).toList();
@@ -18,6 +20,7 @@ class CicilanProvider with ChangeNotifier {
       _cicilanList = snapshot.docs
           .map((doc) => CicilanModel.fromMap(doc.id, doc.data() as Map<String, dynamic>))
           .toList();
+      _isLoaded = true;
       notifyListeners();
     });
   }
