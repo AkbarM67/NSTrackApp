@@ -89,8 +89,24 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class AuthWrapper extends StatelessWidget {
+class AuthWrapper extends StatefulWidget {
   const AuthWrapper({super.key});
+
+  @override
+  State<AuthWrapper> createState() => _AuthWrapperState();
+}
+
+class _AuthWrapperState extends State<AuthWrapper> {
+  bool _listenersStarted = false;
+
+  void _startListeners(String userId) {
+    if (_listenersStarted) return;
+    _listenersStarted = true;
+    context.read<TransactionProvider>().listenTransactions(userId);
+    context.read<SavingsProvider>().listenSavingsGoals(userId);
+    context.read<CicilanProvider>().listenCicilan(userId);
+    context.read<BudgetProvider>().loadBudget(userId);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -103,14 +119,10 @@ class AuthWrapper extends StatelessWidget {
           );
         }
         if (snapshot.hasData) {
-          final userId = snapshot.data!.uid;
-          // Start semua listener sebelum masuk HomeScreen
-          context.read<TransactionProvider>().listenTransactions(userId);
-          context.read<SavingsProvider>().listenSavingsGoals(userId);
-          context.read<CicilanProvider>().listenCicilan(userId);
-          context.read<BudgetProvider>().loadBudget(userId);
+          _startListeners(snapshot.data!.uid);
           return const HomeScreen();
         }
+        _listenersStarted = false;
         return LoginScreen();
       },
     );
