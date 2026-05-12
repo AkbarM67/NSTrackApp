@@ -36,6 +36,9 @@ class TransactionProvider with ChangeNotifier {
           .toList();
       _isLoaded = true;
       notifyListeners();
+    }, onError: (e) {
+      _isLoaded = true;
+      notifyListeners();
     });
   }
 
