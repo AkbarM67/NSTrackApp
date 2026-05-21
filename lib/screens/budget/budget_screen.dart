@@ -3,9 +3,13 @@ import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../providers/budget_provider.dart';
 import '../../providers/transaction_provider.dart';
+import '../../providers/cicilan_provider.dart';
+import '../../providers/period_settings_provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/utils/currency_format.dart';
+import '../../core/utils/period_helper.dart';
 import 'set_budget_screen.dart';
+import 'budget_history_screen.dart';
 
 class BudgetScreen extends StatefulWidget {
   const BudgetScreen({super.key});
@@ -15,12 +19,52 @@ class BudgetScreen extends StatefulWidget {
 }
 
 class _BudgetScreenState extends State<BudgetScreen> {
+  late DateTime _selectedPeriodStart;
+
+  @override
+  void initState() {
+    super.initState();
+    final periodProvider = context.read<PeriodSettingsProvider>();
+    _selectedPeriodStart = PeriodHelper.getCurrentPeriodStart(startDay: periodProvider.startDay);
+  }
+
+  bool get _isCurrentPeriod {
+    final periodProvider = context.read<PeriodSettingsProvider>();
+    final current = PeriodHelper.getCurrentPeriodStart(startDay: periodProvider.startDay);
+    return _selectedPeriodStart.year == current.year &&
+        _selectedPeriodStart.month == current.month &&
+        _selectedPeriodStart.day == current.day;
+  }
+
+  void _prevPeriod() {
+    final startDay = context.read<PeriodSettingsProvider>().startDay;
+    setState(() {
+      _selectedPeriodStart = DateTime(
+        _selectedPeriodStart.year,
+        _selectedPeriodStart.month - 1,
+        startDay,
+      );
+    });
+  }
+
+  void _nextPeriod() {
+    if (_isCurrentPeriod) return;
+    final startDay = context.read<PeriodSettingsProvider>().startDay;
+    setState(() {
+      _selectedPeriodStart = DateTime(
+        _selectedPeriodStart.year,
+        _selectedPeriodStart.month + 1,
+        startDay,
+      );
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Consumer2<BudgetProvider, TransactionProvider>(
-        builder: (context, budgetProvider, transactionProvider, _) {
+      body: Consumer3<BudgetProvider, TransactionProvider, CicilanProvider>(
+        builder: (context, budgetProvider, transactionProvider, cicilanProvider, _) {
           final budget = budgetProvider.budget;
 
           if (budget == null) {
@@ -61,14 +105,17 @@ class _BudgetScreenState extends State<BudgetScreen> {
             );
           }
 
-          final now = DateTime.now();
-          final monthTransactions = transactionProvider.transactions.where((t) {
-            return t.date.year == now.year && t.date.month == now.month;
-          }).toList();
+          final periodTransactions = PeriodHelper.getTransactionsForPeriod(
+            transactionProvider.transactions,
+            _selectedPeriodStart,
+            endDay: context.read<PeriodSettingsProvider>().endDay,
+          );
 
-          final needsSpent = budgetProvider.getNeedsSpent(monthTransactions);
-          final wantsSpent = budgetProvider.getWantsSpent(monthTransactions);
-          final savingsSpent = budgetProvider.getSavingsSpent(monthTransactions);
+          final needsSpent = budgetProvider.getNeedsSpent(periodTransactions);
+          final cicilanSpent = budgetProvider.getCicilanSpent(periodTransactions);
+          final wantsSpent = budgetProvider.getWantsSpent(periodTransactions);
+          final savingsSpent = budgetProvider.getSavingsSpent(periodTransactions);
+          final activeCicilan = cicilanProvider.activeCicilan;
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
@@ -97,6 +144,14 @@ class _BudgetScreenState extends State<BudgetScreen> {
                           const Text('Budget Bulanan', style: TextStyle(color: Colors.white70, fontSize: 14)),
                           Row(
                             children: [
+                              IconButton(
+                                icon: const Icon(Icons.history, color: Colors.white, size: 20),
+                                onPressed: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (_) => const BudgetHistoryScreen()),
+                                ),
+                                tooltip: 'History Budget',
+                              ),
                               IconButton(
                                 icon: const Icon(Icons.delete, color: Colors.white, size: 20),
                                 onPressed: () {
@@ -156,6 +211,27 @@ class _BudgetScreenState extends State<BudgetScreen> {
                       const SizedBox(height: 8),
                       Text('Metode ${budget.needsPercentage.toInt()}/${budget.wantsPercentage.toInt()}/${budget.savingsPercentage.toInt()}',
                           style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                      const SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          GestureDetector(
+                            onTap: _prevPeriod,
+                            child: const Icon(Icons.chevron_left, color: Colors.white),
+                          ),
+                          Text(
+                            PeriodHelper.getPeriodLabel(_selectedPeriodStart, endDay: context.read<PeriodSettingsProvider>().endDay),
+                            style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+                          ),
+                          GestureDetector(
+                            onTap: _nextPeriod,
+                            child: Icon(
+                              Icons.chevron_right,
+                              color: _isCurrentPeriod ? Colors.white38 : Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
@@ -167,7 +243,9 @@ class _BudgetScreenState extends State<BudgetScreen> {
                   percentage: budget.needsPercentage,
                   budgetAmount: budget.needsAmount,
                   spentAmount: needsSpent,
-                  categories: 'Makanan, Transport',
+                  categories: 'Makanan, Transport, Cicilan',
+                  cicilanSpent: cicilanSpent,
+                  activeCicilanCount: activeCicilan.length,
                 ),
                 const SizedBox(height: 16),
                 _buildCategoryCard(
@@ -232,6 +310,8 @@ class _BudgetScreenState extends State<BudgetScreen> {
     required double budgetAmount,
     required double spentAmount,
     required String categories,
+    double cicilanSpent = 0,
+    int activeCicilanCount = 0,
   }) {
     final progress = budgetAmount > 0 ? (spentAmount / budgetAmount).clamp(0.0, 1.0) : 0.0;
     final remaining = budgetAmount - spentAmount;
@@ -316,6 +396,29 @@ class _BudgetScreenState extends State<BudgetScreen> {
               valueColor: AlwaysStoppedAnimation<Color>(isOverBudget ? Colors.red : color),
             ),
           ),
+          if (cicilanSpent > 0) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.orange.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.orange.shade200),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.credit_card, size: 14, color: Colors.orange.shade700),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      'Cicilan ($activeCicilanCount aktif): ${CurrencyFormat.formatRupiah(cicilanSpent)}',
+                      style: TextStyle(fontSize: 11, color: Colors.orange.shade800, fontWeight: FontWeight.w500),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );

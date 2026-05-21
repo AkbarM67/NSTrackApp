@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/budget_model.dart';
+import '../models/cicilan_model.dart';
 import '../core/services/notification_service.dart';
 
 class BudgetProvider with ChangeNotifier {
@@ -58,7 +59,13 @@ class BudgetProvider with ChangeNotifier {
   double getNeedsSpent(List transactions) {
     return transactions
         .where((t) => t.type == 'expense' && 
-               ['Makanan', 'Transport'].contains(t.category))
+               ['Makanan', 'Transport', 'Cicilan'].contains(t.category))
+        .fold(0.0, (sum, t) => sum + t.amount);
+  }
+
+  double getCicilanSpent(List transactions) {
+    return transactions
+        .where((t) => t.type == 'expense' && t.category == 'Cicilan')
         .fold(0.0, (sum, t) => sum + t.amount);
   }
 
@@ -73,6 +80,12 @@ class BudgetProvider with ChangeNotifier {
     return transactions
         .where((t) => t.type == 'expense' && t.category == 'Nabung')
         .fold(0.0, (sum, t) => sum + t.amount);
+  }
+
+  double getTotalActiveCicilanMonthly(List<CicilanModel> cicilanList) {
+    return cicilanList
+        .where((c) => !c.isCompleted)
+        .fold(0.0, (sum, c) => sum + c.monthlyAmount);
   }
 
   void checkBudgetNotifications(List transactions) {

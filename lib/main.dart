@@ -9,6 +9,7 @@ import 'providers/transaction_provider.dart';
 import 'providers/savings_provider.dart';
 import 'providers/budget_provider.dart';
 import 'providers/cicilan_provider.dart';
+import 'providers/period_settings_provider.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/home/home_screen.dart';
 import 'core/services/notification_service.dart';
@@ -40,6 +41,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => SavingsProvider()),
         ChangeNotifierProvider(create: (_) => BudgetProvider()),
         ChangeNotifierProvider(create: (_) => CicilanProvider()),
+        ChangeNotifierProvider(create: (_) => PeriodSettingsProvider()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
@@ -102,6 +104,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
   void _startListeners(String userId) {
     if (_listenersStarted) return;
     _listenersStarted = true;
+    context.read<PeriodSettingsProvider>().loadSettings(userId);
     context.read<TransactionProvider>().listenTransactions(userId);
     context.read<SavingsProvider>().listenSavingsGoals(userId);
     context.read<CicilanProvider>().listenCicilan(userId);

@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../providers/transaction_provider.dart';
+import '../../providers/period_settings_provider.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/utils/period_helper.dart';
 import '../../core/utils/currency_format.dart';
 import '../../core/services/simple_widget_service.dart';
 import '../transaction/add_transaction_screen.dart';
@@ -25,15 +27,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildDashboard() {
-    return Consumer<TransactionProvider>(
-      builder: (context, provider, _) {
+    return Consumer2<TransactionProvider, PeriodSettingsProvider>(
+      builder: (context, provider, periodProvider, _) {
         if (!provider.isLoaded) {
           return const Scaffold(
             body: Center(child: CircularProgressIndicator()),
           );
         }
-        // Update widget
-        SimpleWidgetService.updateWidget(provider.balance, provider.totalIncome, provider.totalExpense);
+
+        final periodStart = PeriodHelper.getCurrentPeriodStart(startDay: periodProvider.startDay);
+        final currentPeriodTransactions = PeriodHelper.getTransactionsForPeriod(
+          provider.transactions,
+          periodStart,
+          endDay: periodProvider.endDay,
+        );
+
+        final totalIncome = currentPeriodTransactions
+            .where((t) => t.type == 'income')
+            .fold(0.0, (sum, t) => sum + t.amount);
+        final totalExpense = currentPeriodTransactions
+            .where((t) => t.type == 'expense')
+            .fold(0.0, (sum, t) => sum + t.amount);
+        final balance = totalIncome - totalExpense;
+
+        SimpleWidgetService.updateWidget(balance, totalIncome, totalExpense);
         
         return Scaffold(
           body: Padding(
@@ -81,7 +98,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               ],
                             ),
                             const SizedBox(height: 12),
-                            Text(_hideAmount ? CurrencyFormat.hideRupiah(provider.totalIncome) : CurrencyFormat.formatRupiah(provider.totalIncome),
+                            Text(_hideAmount ? CurrencyFormat.hideRupiah(totalIncome) : CurrencyFormat.formatRupiah(totalIncome),
                                 style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
                           ],
                         ),
@@ -126,7 +143,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               ],
                             ),
                             const SizedBox(height: 12),
-                            Text(_hideAmount ? CurrencyFormat.hideRupiah(provider.totalExpense) : CurrencyFormat.formatRupiah(provider.totalExpense),
+                            Text(_hideAmount ? CurrencyFormat.hideRupiah(totalExpense) : CurrencyFormat.formatRupiah(totalExpense),
                                 style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
                           ],
                         ),
@@ -156,7 +173,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         children: [
                           const Text('Total Saldo', style: TextStyle(color: Colors.white70, fontSize: 14)),
                           const SizedBox(height: 4),
-                          Text(_hideAmount ? CurrencyFormat.hideRupiah(provider.balance) : CurrencyFormat.formatRupiah(provider.balance),
+                          Text(_hideAmount ? CurrencyFormat.hideRupiah(balance) : CurrencyFormat.formatRupiah(balance),
                               style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
                         ],
                       ),
@@ -185,9 +202,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ],
                 ),
                 Expanded(
-                  child: provider.currentPeriodTransactions.isEmpty
+                  child: currentPeriodTransactions.isEmpty
                       ? const Center(child: Text('Belum ada transaksi periode ini'))
-                      : _buildGroupedList(context, provider),
+                      : _buildGroupedList(context, currentPeriodTransactions),
                 ),
               ],
             ),
@@ -208,9 +225,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildGroupedList(BuildContext context, TransactionProvider provider) {
-    final transactions = provider.currentPeriodTransactions;
-
+  Widget _buildGroupedList(BuildContext context, List transactions) {
     final Map<String, List> grouped = {};
     for (final t in transactions) {
       final key = '${t.date.year}-${t.date.month.toString().padLeft(2, '0')}-${t.date.day.toString().padLeft(2, '0')}';

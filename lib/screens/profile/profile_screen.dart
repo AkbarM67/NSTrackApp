@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import '../../core/constants/app_colors.dart';
+import '../../core/utils/period_helper.dart';
+import '../../providers/period_settings_provider.dart';
 import 'edit_profile_screen.dart';
+import 'period_settings_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -186,6 +190,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         }
                       },
                     ),
+                    Consumer<PeriodSettingsProvider>(
+                      builder: (context, periodProvider, _) {
+                        final label = PeriodHelper.getPeriodLabel(
+                          PeriodHelper.getCurrentPeriodStart(startDay: periodProvider.startDay),
+                          endDay: periodProvider.endDay,
+                        );
+                        return _buildMenuItem(
+                          icon: Icons.calendar_month_outlined,
+                          title: 'Pengaturan Periode',
+                          subtitle: label,
+                          onTap: () async {
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const PeriodSettingsScreen()),
+                            );
+                            setState(() {});
+                          },
+                        );
+                      },
+                    ),
                     _buildMenuItem(
                       icon: Icons.help_outline,
                       title: 'Bantuan',
@@ -243,6 +267,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     required IconData icon,
     required String title,
     required VoidCallback onTap,
+    String? subtitle,
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -260,6 +285,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: Icon(icon, color: AppColors.primary, size: 24),
         ),
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+        subtitle: subtitle != null
+            ? Text(subtitle, style: TextStyle(fontSize: 11, color: Colors.grey.shade500))
+            : null,
         trailing: const Icon(Icons.chevron_right, color: Colors.grey),
         onTap: onTap,
       ),

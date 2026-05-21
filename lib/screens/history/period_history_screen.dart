@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../providers/transaction_provider.dart';
+import '../../providers/period_settings_provider.dart';
 import '../../core/utils/period_helper.dart';
 import '../../core/utils/currency_format.dart';
 
@@ -26,7 +27,11 @@ class _PeriodHistoryScreenState extends State<PeriodHistoryScreen> with SingleTi
 
   void _loadPeriods() {
     final provider = context.read<TransactionProvider>();
-    final periods = PeriodHelper.getAvailablePeriods(provider.transactions);
+    final periodProvider = context.read<PeriodSettingsProvider>();
+    final periods = PeriodHelper.getAvailablePeriods(
+      provider.transactions,
+      startDay: periodProvider.startDay,
+    );
     
     setState(() {
       _periods = periods;
@@ -56,7 +61,8 @@ class _PeriodHistoryScreenState extends State<PeriodHistoryScreen> with SingleTi
           controller: _tabController,
           isScrollable: true,
           tabs: _periods.map((period) {
-            return Tab(text: PeriodHelper.getPeriodLabel(period));
+            final periodProvider = context.read<PeriodSettingsProvider>();
+            return Tab(text: PeriodHelper.getPeriodLabel(period, endDay: periodProvider.endDay));
           }).toList(),
         ),
       ),
@@ -68,11 +74,12 @@ class _PeriodHistoryScreenState extends State<PeriodHistoryScreen> with SingleTi
   }
 
   Widget _buildPeriodView(DateTime periodStart) {
-    return Consumer<TransactionProvider>(
-      builder: (context, provider, _) {
+    return Consumer2<TransactionProvider, PeriodSettingsProvider>(
+      builder: (context, provider, periodProvider, _) {
         final transactions = PeriodHelper.getTransactionsForPeriod(
           provider.transactions,
           periodStart,
+          endDay: periodProvider.endDay,
         );
 
         final income = transactions
