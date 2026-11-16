@@ -53,17 +53,18 @@ class CicilanProvider with ChangeNotifier {
     await _service.addCicilan(cicilan.toMap());
   }
 
-  Future<void> bayarCicilan(String cicilanId) async {
+  Future<void> bayarCicilan(String cicilanId, double amount) async {
+    if (amount <= 0) return;
     final cicilan = _cicilanList.firstWhere((c) => c.id == cicilanId);
     final userId = FirebaseAuth.instance.currentUser?.uid;
 
-    // Catat sebagai transaksi pengeluaran
+    // Catat sebagai transaksi pengeluaran sesuai jumlah yang dibayar
     if (userId != null) {
       final transaction = TransactionModel(
         id: '',
         userId: userId,
         type: 'expense',
-        amount: cicilan.monthlyAmount,
+        amount: amount,
         category: 'Cicilan',
         description: 'Cicilan: ${cicilan.name} (${cicilan.paidMonths + 1}/${cicilan.totalMonths})',
         date: DateTime.now(),
@@ -71,12 +72,28 @@ class CicilanProvider with ChangeNotifier {
       await _service.addTransaction(transaction.toMap());
     }
 
-    final newPaidMonths = cicilan.paidMonths + 1;
-    final nextPayment = _calculateNextPayment(cicilan.paymentDay);
+    final newTotalPaid = (cicilan.totalPaid + amount).clamp(0.0, cicilan.totalAmount).toDouble();
+    int newPaidMonths = 0;
+    if (cicilan.monthlyAmount > 0) {
+      final m = (newTotalPaid / cicilan.monthlyAmount).floor();
+      newPaidMonths = m < 0 ? 0 : (m > cicilan.totalMonths ? cicilan.totalMonths : m);
+    }
+    final completed = newTotalPaid >= cicilan.totalAmount;
+
+    // nextPaymentDate maju hanya jika ada bulan penuh yang baru selesai
+    DateTime? nextPayment;
+    if (completed) {
+      nextPayment = null;
+    } else if (newPaidMonths > cicilan.paidMonths) {
+      nextPayment = _calculateNextPayment(cicilan.paymentDay);
+    } else {
+      nextPayment = cicilan.nextPaymentDate;
+    }
 
     await _service.updateCicilan(cicilanId, {
+      'totalPaid': newTotalPaid,
       'paidMonths': newPaidMonths,
-      'nextPaymentDate': newPaidMonths >= cicilan.totalMonths ? null : nextPayment.toIso8601String(),
+      'nextPaymentDate': nextPayment?.toIso8601String(),
     });
   }
 

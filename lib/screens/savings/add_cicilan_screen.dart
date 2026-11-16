@@ -237,7 +237,7 @@ class _AddCicilanScreenState extends State<AddCicilanScreen> {
       totalAmount: totalAmount,
       monthlyAmount: monthlyAmount,
       totalMonths: _totalMonths,
-      paidMonths: 0,
+      totalPaid: 0,
       paymentDay: _paymentDay,
       startDate: _startDate,
       nextPaymentDate: nextPayment,

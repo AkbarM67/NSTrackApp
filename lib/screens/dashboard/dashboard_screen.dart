@@ -298,8 +298,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   size: 20,
                 ),
               ),
-              title: Text(transaction.category,
-                  style: const TextStyle(fontWeight: FontWeight.w600)),
+              title: Text(
+                transaction.subcategory.isNotEmpty
+                    ? '${transaction.category} • ${transaction.subcategory}'
+                    : transaction.category,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
               subtitle: transaction.description.isNotEmpty
                   ? Text(transaction.description,
                       style: TextStyle(color: AppColors.textSecondary, fontSize: 12))

@@ -4,6 +4,7 @@ import '../../providers/cicilan_provider.dart';
 import '../../models/cicilan_model.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/utils/currency_format.dart';
+import '../../core/utils/currency_formatter.dart';
 import 'add_cicilan_screen.dart';
 
 class CicilanScreen extends StatefulWidget {
@@ -209,20 +210,69 @@ class _CicilanScreenState extends State<CicilanScreen> {
   }
 
   void _confirmBayar(BuildContext context, CicilanModel cicilan, CicilanProvider provider) {
+    final amountController = TextEditingController(
+      text: cicilan.remainingForCurrentMonth.toStringAsFixed(0).replaceAllMapped(
+        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+        (Match m) => '${m[1]}.',
+      ),
+    );
+
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('Bayar Cicilan'),
-        content: Text(
-          'Bayar cicilan ${cicilan.name} sebesar ${CurrencyFormat.formatRupiah(cicilan.monthlyAmount)}?\n\nAkan otomatis tercatat sebagai pengeluaran.',
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(cicilan.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              const SizedBox(height: 8),
+              Text('Sisa total: ${CurrencyFormat.formatRupiah(cicilan.remainingAmount)}',
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+              const SizedBox(height: 4),
+              Text('Cicilan per bulan: ${CurrencyFormat.formatRupiah(cicilan.monthlyAmount)}',
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+              const SizedBox(height: 4),
+              Text('Kurang bulan ini: ${CurrencyFormat.formatRupiah(cicilan.remainingForCurrentMonth)}',
+                  style: const TextStyle(fontSize: 12, color: Colors.orange, fontWeight: FontWeight.w600)),
+              const SizedBox(height: 16),
+              const Text('Jumlah Bayar', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+              const SizedBox(height: 8),
+              TextField(
+                controller: amountController,
+                decoration: InputDecoration(
+                  prefixText: 'Rp ',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  filled: true,
+                  fillColor: const Color(0xFFF5F5F5),
+                ),
+                keyboardType: TextInputType.number,
+                inputFormatters: [CurrencyInputFormatter()],
+                autofocus: true,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Bisa isi berapa saja. Bulan baru terhitung jika pembayaran mencukupi 1 bulan penuh.',
+                style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
           ElevatedButton(
             onPressed: () async {
+              final amount = parseCurrency(amountController.text);
+              if (amount <= 0) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Masukkan jumlah bayar'), backgroundColor: Colors.red),
+                );
+                return;
+              }
               Navigator.pop(context);
-              await provider.bayarCicilan(cicilan.id);
+              await provider.bayarCicilan(cicilan.id, amount);
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Cicilan berhasil dibayar'), backgroundColor: Colors.green),

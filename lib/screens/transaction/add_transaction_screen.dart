@@ -9,6 +9,7 @@ import '../../providers/cicilan_provider.dart';
 import '../../models/transaction_model.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/constants/category_data.dart';
 import '../../core/services/receipt_scanner_service.dart';
 
 class AddTransactionScreen extends StatefulWidget {
@@ -26,13 +27,14 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   
   String _type = 'expense';
   String _category = 'Makanan';
+  String? _subcategory;
   String? _selectedSavingsGoalId;
   String? _selectedCicilanId;
   bool _isScanning = false;
   DateTime _selectedDate = DateTime.now();
 
   final List<String> _expenseCategories = ['Makanan', 'Transport', 'Belanja', 'Hiburan', 'Cicilan', 'Nabung', 'Lainnya'];
-  final List<String> _incomeCategories = ['Gaji', 'Bonus', 'Investasi', 'Lainnya'];
+  final List<String> _incomeCategories = ['Ojol', 'Gaji', 'Bonus', 'Investasi', 'Lainnya'];
 
   @override
   void initState() {
@@ -93,6 +95,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                   setState(() {
                     _type = newSelection.first;
                     _category = _type == 'expense' ? _expenseCategories[0] : _incomeCategories[0];
+                    _subcategory = null;
                   });
                 },
                 style: ButtonStyle(
@@ -121,6 +124,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                 onChanged: (value) {
                   setState(() {
                     _category = value!;
+                    _subcategory = null;
                     if (_category != 'Nabung') {
                       _selectedSavingsGoalId = null;
                     }
@@ -130,6 +134,25 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                   });
                 },
               ),
+              if (CategoryData.subcategoriesFor(_category) != null) ...[
+                const SizedBox(height: 24),
+                const Text('Subkategori', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  value: _subcategory,
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                    filled: true,
+                    fillColor: const Color(0xFFF5F5F5),
+                    prefixIcon: Icon(Icons.list_alt, color: AppColors.primary),
+                    hintText: 'Pilih subkategori',
+                  ),
+                  items: CategoryData.subcategoriesFor(_category)!
+                      .map((sub) => DropdownMenuItem(value: sub, child: Text(sub)))
+                      .toList(),
+                  onChanged: (value) => setState(() => _subcategory = value),
+                ),
+              ],
               if (_category == 'Nabung') ...[
                 const SizedBox(height: 24),
                 const Text('Target Tabungan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
@@ -407,7 +430,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
         }
       } else if (_category == 'Cicilan' && _selectedCicilanId != null) {
         // Bayar cicilan & catat transaksi
-        await context.read<CicilanProvider>().bayarCicilan(_selectedCicilanId!);
+        await context.read<CicilanProvider>().bayarCicilan(_selectedCicilanId!, amount);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Cicilan berhasil dibayar'), backgroundColor: Colors.green),
@@ -422,6 +445,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
           type: _type,
           amount: amount,
           category: _category,
+          subcategory: _subcategory ?? '',
           description: _descriptionController.text,
           date: _selectedDate,
         );

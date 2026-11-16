@@ -113,7 +113,7 @@ class GoogleSheetsImportService {
     if (type == 'income') {
       if (lower.contains('gaji')) return 'Gaji';
       if (lower.contains('bonus')) return 'Bonus';
-      if (lower.contains('gojek') || lower.contains('ojek')) return 'Lainnya';
+      if (lower.contains('ojol') || lower.contains('gojek') || lower.contains('grab') || lower.contains('ojek')) return 'Ojol';
       return 'Lainnya';
     }
 

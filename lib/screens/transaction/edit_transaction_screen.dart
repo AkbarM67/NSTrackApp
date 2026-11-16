@@ -5,6 +5,7 @@ import '../../providers/transaction_provider.dart';
 import '../../models/transaction_model.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/constants/category_data.dart';
 
 class EditTransactionScreen extends StatefulWidget {
   final TransactionModel transaction;
@@ -22,15 +23,23 @@ class _EditTransactionScreenState extends State<EditTransactionScreen> {
   
   late String _type;
   late String _category;
+  String? _subcategory;
 
   final List<String> _expenseCategories = ['Makanan', 'Transport', 'Belanja', 'Hiburan', 'Nabung', 'Lainnya'];
-  final List<String> _incomeCategories = ['Gaji', 'Bonus', 'Investasi', 'Lainnya'];
+  final List<String> _incomeCategories = ['Ojol', 'Gaji', 'Bonus', 'Investasi', 'Lainnya'];
 
   @override
   void initState() {
     super.initState();
     _type = widget.transaction.type;
     _category = widget.transaction.category;
+    _subcategory = widget.transaction.subcategory;
+    final subs = CategoryData.subcategoriesFor(_category);
+    if (subs == null) {
+      _subcategory = '';
+    } else if (!subs.contains(_subcategory)) {
+      _subcategory = null;
+    }
     _amountController = TextEditingController(
       text: widget.transaction.amount.toStringAsFixed(0).replaceAllMapped(
         RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
@@ -75,6 +84,7 @@ class _EditTransactionScreenState extends State<EditTransactionScreen> {
                   setState(() {
                     _type = newSelection.first;
                     _category = _type == 'expense' ? _expenseCategories[0] : _incomeCategories[0];
+                    _subcategory = null;
                   });
                 },
                 style: ButtonStyle(
@@ -100,8 +110,32 @@ class _EditTransactionScreenState extends State<EditTransactionScreen> {
                 items: (_type == 'expense' ? _expenseCategories : _incomeCategories)
                     .map((cat) => DropdownMenuItem(value: cat, child: Text(cat)))
                     .toList(),
-                onChanged: (value) => setState(() => _category = value!),
+                onChanged: (value) {
+                  setState(() {
+                    _category = value!;
+                    _subcategory = null;
+                  });
+                },
               ),
+              if (CategoryData.subcategoriesFor(_category) != null) ...[
+                const SizedBox(height: 24),
+                const Text('Subkategori', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  value: _subcategory,
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                    filled: true,
+                    fillColor: const Color(0xFFF5F5F5),
+                    prefixIcon: Icon(Icons.list_alt, color: AppColors.primary),
+                    hintText: 'Pilih subkategori',
+                  ),
+                  items: CategoryData.subcategoriesFor(_category)!
+                      .map((sub) => DropdownMenuItem(value: sub, child: Text(sub)))
+                      .toList(),
+                  onChanged: (value) => setState(() => _subcategory = value),
+                ),
+              ],
               const SizedBox(height: 24),
               const Text('Jumlah', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
               const SizedBox(height: 12),
@@ -162,6 +196,7 @@ class _EditTransactionScreenState extends State<EditTransactionScreen> {
         type: _type,
         amount: parseCurrency(_amountController.text),
         category: _category,
+        subcategory: _subcategory ?? '',
         description: _descriptionController.text,
         date: widget.transaction.date,
       );

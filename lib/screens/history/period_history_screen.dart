@@ -380,7 +380,9 @@ class _PeriodHistoryScreenState extends State<PeriodHistoryScreen> with SingleTi
             ),
             title: Text(transaction.description),
             subtitle: Text(
-              '${transaction.category} • ${transaction.date.day}/${transaction.date.month}/${transaction.date.year}',
+              transaction.subcategory.isNotEmpty
+                  ? '${transaction.category} • ${transaction.subcategory} • ${transaction.date.day}/${transaction.date.month}/${transaction.date.year}'
+                  : '${transaction.category} • ${transaction.date.day}/${transaction.date.month}/${transaction.date.year}',
               style: const TextStyle(fontSize: 12),
             ),
             trailing: Text(

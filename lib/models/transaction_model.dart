@@ -4,6 +4,7 @@ class TransactionModel {
   final String type;
   final double amount;
   final String category;
+  final String subcategory;
   final String description;
   final DateTime date;
 
@@ -13,6 +14,7 @@ class TransactionModel {
     required this.type,
     required this.amount,
     required this.category,
+    this.subcategory = '',
     required this.description,
     required this.date,
   });
@@ -23,6 +25,7 @@ class TransactionModel {
       'type': type,
       'amount': amount,
       'category': category,
+      'subcategory': subcategory,
       'description': description,
       'date': date.toIso8601String(),
     };
@@ -35,6 +38,7 @@ class TransactionModel {
       type: map['type'] ?? '',
       amount: (map['amount'] ?? 0).toDouble(),
       category: map['category'] ?? '',
+      subcategory: map['subcategory'] ?? '',
       description: map['description'] ?? '',
       date: DateTime.parse(map['date']),
     );
